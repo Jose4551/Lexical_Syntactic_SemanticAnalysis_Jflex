@@ -1,0 +1,43 @@
+#include <iostream>
+#include <stdio.h>
+using namespace std;
+const int VELOCIDAD_LUZA = 2000000;
+const float VELOCIDAD_LUZE = 1500.2;
+const string VELOCIDAD_LUZO = "hello world";
+const char VELOCIDAD_LUZ = 'k';
+int main(){
+int suma 3 + 10 = 
+int resta 7 - 17 =
+int multi 10 * 10 =
+int divi 21 / 2 =
+int z,x,y;
+float w,u,v;
+string m,n,l;
+char o,p,q;
+bool f = "true" ;
+bool g = "false" ;
+bool f = "true" ;
+bool h = true && true ;
+bool j = false && true ;
+bool k = true && 2 ;
+int a= 10;
+int a= 19;
+int b= 15;
+float c=20.5;
+string d="hola";
+char e ='z';
+for (i=10; i<=20; i--){cout<<"Hello world4";}
+if (i>=2)
+    {cout<<"Hello world3";}
+if (i>=2 && i<12)
+    {cout<<"Hello world5";}
+if (i>2)
+    {
+        cout<<"Hello world";
+        if(i>7)
+            {
+            cout<<"Hello world2";
+                }else {cout<<"Hello worlds";}
+                }
+}
+

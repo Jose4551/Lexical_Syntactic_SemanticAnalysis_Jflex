@@ -1,0 +1,360 @@
+/*AGUIRRE GAYTAN ADRIAN
+CALLEROS RODRIGUEZ JOSE GUILLERMO
+LOPEZ ZEPEDA CARLOS
+PULIDO VAZQUEZ MARIANA PAOLA*/
+
+
+package demo_cup;
+
+import java_cup.runtime.*;
+
+parser code 
+{:
+    public static TablaSimbolos tabla= new TablaSimbolos();
+    public static Simbolo simbolo;
+
+    public void syntax_error(Symbol s) 
+    {
+        report_error("Error de sintaxis en linea:" + (s.left) + 
+                     " ,columna: " + (s.right) +
+                     " ,simbolo: " + s.value, null);
+    }
+
+    public void unrecovered_syntax_error(Symbol s) throws Exception 
+    {
+        report_fatal_error("ERROR IRRECUPERABLE", s);
+    }
+:}
+
+/* SIMBOLOS TERMINALES */
+terminal ERROR,PUNTO, COMA, DOS_PUNTOS, 
+PARENTESIS_APERTURA, PARENTESIS_CIERRE, CORCHETE_APERTURA,
+ CORCHETE_CIERRE, OPERADOR_RELACIONAL, AND, OR, NOT, CADENA, DO, INT, FLOAT,STRING, NEW, TRY, 
+ THIS, TRUE, FALSE, BOOL, CHAR, VOID, THROW, 
+UNION, USING, SHORT, WHILE, CLASS, TYPEID, RETURN, DOUBLE,
+ SIGNED, SIZEOF, STATIC, STRUCT, SWITCH, 
+PUBLIC, IMPORT, TYPEDEF, MUTABLE, PRIVATE, VIRTUAL, PACKAGE,
+ TEMPLATE, TYPENAME, OPERATOR, REGISTER, 
+UNSIGNED, VOLATILE, NAMESPACE, PROTECTED,IF,ELSE,FOR,COUT,CONST,CONSTANTE;/*palabras reservadas*/
+terminal ASIGNACION, PUNTO_COMA,OPERADOR_ARITMETICO,COMENTARIOU,COMENTARIOM,OPERADOR_MEQ,OPERADOR_MAQ,
+OPERADOR_MEIQ,OPERADOR_MAIQ,OPERADOR_D, RESTA, MULTI, DIVI; /*simbolos*/
+terminal FLOTANTE, LLAVE_APER, LLAVE_CERR, LONG, CARACTER; /*expresiones*/
+terminal String ID;
+terminal String ENTERO;
+
+/* SIMBOLOS NO TERMINALES */
+non terminal sentencia,instrucciones, declaraciones, dec_paquetes, dec_importaciones, dec_clases,
+ dec_variables, tipo_dato,valor, invalido, lista_importaciones,lista_carpetas,dec_if,cuerpoclase,
+dec_constantes, dec_funcion,impresiones,cuerpo_instrucciones,expresion_booleana,dec_else,
+dec_while, dec_for,paraconst, antes,expfor,expresion_compuesta,lista_var,dec_suma,dec_resta,
+dec_multi,dec_divi,boolcheck;
+
+/* PRECEDENCIAS */
+
+/* REGLAS GRAMATICALES */
+start with sentencia;
+
+sentencia::= declaraciones;
+
+
+/* ambito a nivel de ARCHIVO */
+
+
+declaraciones::= dec_importaciones dec_paquetes dec_funcion
+                |dec_importaciones dec_paquetes dec_variables dec_funcion
+                |dec_importaciones dec_paquetes paraconst dec_funcion
+; 
+
+lista_carpetas::= ID | /*regla 1*/
+                  ID PUNTO lista_carpetas /*regla2*/
+                  ;
+
+dec_importaciones::=lista_importaciones
+;
+lista_importaciones::= IMPORT OPERADOR_MEQ lista_carpetas OPERADOR_MAQ /*una linea*/
+    {:
+         System.out.println("\nDeclaracion de importacion\n"); 
+    :}
+      | IMPORT OPERADOR_MEQ lista_carpetas OPERADOR_MAQ lista_importaciones/*varias lineas*/
+    {:
+         System.out.println("\nDeclaracion de varias importaciones\n"); 
+    :}
+;
+
+dec_paquetes::= PACKAGE lista_carpetas PUNTO_COMA
+    {: System.out.println("\nDeclaracion de espacio de nombres\n"); :}
+;
+
+
+/* ambito a nivel de CLASE */
+
+
+
+dec_clases::= CLASS ID LLAVE_APER PUBLIC cuerpoclase LLAVE_CERR
+    {: 
+    System.out.println("\nDeclaracion de clases\n"); 
+    :}
+;
+cuerpoclase::=  dec_funcion
+                |dec_funcion cuerpoclase
+;
+/* ambito a nivel de METODO */
+dec_if::=IF PARENTESIS_APERTURA expresion_compuesta PARENTESIS_CIERRE LLAVE_APER cuerpo_instrucciones LLAVE_CERR
+;
+dec_else::= dec_if ELSE LLAVE_APER cuerpo_instrucciones LLAVE_CERR
+        {:
+         System.out.println("\nCondicional else if \n"); 
+        :}
+;
+dec_while::= WHILE PARENTESIS_APERTURA expresion_booleana PARENTESIS_CIERRE LLAVE_APER cuerpo_instrucciones LLAVE_CERR
+        {:
+         System.out.println("\nCiclo while \n"); 
+        :}
+|DO LLAVE_APER cuerpo_instrucciones LLAVE_CERR dec_while
+        {:
+         System.out.println("\nCiclo do-while \n"); 
+        :}
+;
+dec_for::= FOR PARENTESIS_APERTURA ID ASIGNACION valor PUNTO_COMA expresion_booleana PUNTO_COMA ID expfor PARENTESIS_CIERRE LLAVE_APER cuerpo_instrucciones LLAVE_CERR
+        {:
+         System.out.println("\nCiclo for \n"); 
+        :}
+;
+expresion_booleana::= ID OPERADOR_MAQ ENTERO
+                     |ID OPERADOR_MEQ ENTERO
+                     |ID OPERADOR_MAIQ ENTERO
+                     |ID OPERADOR_MEIQ ENTERO
+                     |ID OPERADOR_D ENTERO
+                     |ID OPERADOR_RELACIONAL ENTERO
+;
+expresion_compuesta::= expresion_booleana
+                       |expresion_booleana AND expresion_compuesta
+; 
+expfor::= OPERADOR_ARITMETICO OPERADOR_ARITMETICO
+        |RESTA RESTA
+;
+cuerpo_instrucciones::=instrucciones
+                        |instrucciones cuerpo_instrucciones
+;
+instrucciones::=dec_if 
+        |impresiones  
+        |dec_else
+        |dec_while
+        |dec_for
+        |dec_variables
+        |dec_suma
+        |dec_resta
+        |dec_multi
+        |dec_divi
+   
+;
+
+paraconst::= antes 
+             |antes paraconst
+;
+antes::= dec_constantes
+        |dec_clases
+;
+impresiones::=COUT OPERADOR_MEQ OPERADOR_MEQ CADENA PUNTO_COMA
+    {:
+         System.out.println("\nImpresion en consola\n"); 
+    :}
+;
+dec_suma::=INT ID ENTERO:s1 OPERADOR_ARITMETICO ENTERO:s2 ASIGNACION 
+    {:
+        int x = Integer.parseInt(s1);
+        int y = Integer.parseInt(s2);
+         RESULT = x+y;
+         System.out.println("\n Correcto es resultado es : -> "+RESULT);
+         System.out.println("");
+    :}
+;
+dec_resta::=INT ID ENTERO:s1 RESTA ENTERO:s2 ASIGNACION
+    {:
+        int x = Integer.parseInt(s1);
+        int y = Integer.parseInt(s2);
+         RESULT = x-y;
+         System.out.println("\n Correcto es resultado es : -> "+RESULT);
+         System.out.println("");
+    :}
+;
+dec_multi::= INT ID ENTERO:s1 MULTI ENTERO:s2 ASIGNACION
+    {:
+        int x = Integer.parseInt(s1);
+        int y = Integer.parseInt(s2);
+         RESULT = x*y;
+         System.out.println("\n Correcto es resultado es : -> "+RESULT);
+         System.out.println("");
+    :}
+;
+dec_divi::= INT ID ENTERO:s1 DIVI ENTERO:s2 ASIGNACION
+    {:
+        int x = Integer.parseInt(s1);
+        int y = Integer.parseInt(s2);
+         float resultado = (float) x / y;
+         if (y==0){System.out.println("\n ERROR no se puede dividir entre 0");}
+         else{System.out.println("\n Correcto es resultado es : -> "+resultado);
+         System.out.println("");}
+    :}
+
+;
+
+lista_var::= ID 
+             |ID COMA lista_var
+                ;
+dec_variables::=INT ID:id ASIGNACION ENTERO:entero PUNTO_COMA
+    {: 
+        System.out.println("\nDeclaracion de variable entero\n"); 
+        parser.simbolo=new Simbolo(id, "int", ""+entero, "metodo", false);
+        if(parser.tabla.agregar(id, parser.simbolo)){
+                        System.out.println("Variable agregada "+id);
+                        System.out.println(parser.tabla.mostrar());
+                    }else{
+                        System.out.println("Error Variable NO agregada porque ya fue declarada -> "+id);
+                    }
+    :}
+    |INT lista_var PUNTO_COMA
+        {: 
+        System.out.println("\nDeclaracion de multiples variables entero en una linea\n");
+        :}
+    |FLOAT ID:id ASIGNACION FLOTANTE:flotante PUNTO_COMA
+    {: 
+        System.out.println("\nDeclaracion de variable flotante\n");
+        parser.simbolo=new Simbolo(id, "float", ""+flotante, "metodo", false);
+        if(parser.tabla.agregar(id, parser.simbolo)){
+                        System.out.println("Variable agregada "+id);
+                        System.out.println(parser.tabla.mostrar());
+                    }else{
+                        System.out.println("ERROR Variable NO agregada "+id);
+                    }
+    :}
+    |FLOAT lista_var PUNTO_COMA
+        {: 
+        System.out.println("\nDeclaracion de multiples variables flotante en una linea\n");
+        :}
+    |STRING ID:id ASIGNACION CADENA:cadena PUNTO_COMA
+    {: 
+        System.out.println("\nDeclaracion de variable cadena\n"); 
+        parser.simbolo=new Simbolo(id, "string", ""+cadena, "metodo", false);
+        if(parser.tabla.agregar(id, parser.simbolo)){
+                        System.out.println("Variable agregada "+id);
+                        System.out.println(parser.tabla.mostrar());
+                    }else{
+                        System.out.println("ERROR Variable NO agregada "+id);
+                    }
+    :}
+    |STRING lista_var PUNTO_COMA
+        {: 
+        System.out.println("\nDeclaracion de multiples variables cadena en una linea\n");
+        :}
+    |CHAR ID:id ASIGNACION CARACTER:caracter PUNTO_COMA
+    {: 
+        System.out.println("\nDeclaracion de variable caracter\n"); 
+        parser.simbolo=new Simbolo(id, "char", ""+caracter, "metodo", false);
+        if(parser.tabla.agregar(id, parser.simbolo)){
+                        System.out.println("Variable agregada "+id);
+                        System.out.println(parser.tabla.mostrar());
+                    }else{
+                        System.out.println("ERROR Variable NO agregada "+id);
+                    }
+    :}
+    |CHAR lista_var PUNTO_COMA
+        {: 
+        System.out.println("\nDeclaracion de multiples variables caracter en una linea\n");
+        :}
+    |BOOL ID:id ASIGNACION CADENA:cadena PUNTO_COMA
+        {: 
+        System.out.println("\nDeclaracion de variable booleana\n");
+        parser.simbolo=new Simbolo(id, "bool", ""+cadena, "metodo", false);
+        if(parser.tabla.agregar(id, parser.simbolo)){
+                        System.out.println("booleano agregado "+id);
+                        System.out.println(parser.tabla.mostrar());
+                    }else{
+                        System.out.println("ERROR boolana NO agregada "+id);
+                    }
+        :}
+    |BOOL ID ASIGNACION boolcheck PUNTO_COMA
+        {: 
+        System.out.println("\n Correcto ambos operandos son booleanos\n");
+        :}
+        |BOOL ID ASIGNACION TRUE AND ENTERO:entero PUNTO_COMA
+        {: 
+        System.out.println("\n ERROR uno de los operandos no es booleano -> "+entero+" no es booleano \n");
+        :}
+        |BOOL ID ASIGNACION FALSE AND ENTERO:entero PUNTO_COMA
+        {: 
+        System.out.println("\n ERROR uno de los operandos no es booleano -> "+entero+" no es booleano \n");
+        :}
+        |BOOL ID ASIGNACION ENTERO:entero AND TRUE PUNTO_COMA
+        {: 
+        System.out.println("\n ERROR uno de los operandos no es booleano -> "+entero+" no es booleano \n");
+        :}
+        |BOOL ID ASIGNACION ENTERO:entero AND FALSE PUNTO_COMA
+        {: 
+        System.out.println("\n ERROR uno de los operandos no es booleano -> "+entero+" no es booleano \n");
+        :}
+;
+boolcheck::= TRUE AND TRUE
+             |TRUE AND FALSE
+             |FALSE AND TRUE
+             |FALSE AND FALSE
+;
+dec_constantes::=CONST INT CONSTANTE:consta ASIGNACION ENTERO:entero PUNTO_COMA //
+    {: 
+        System.out.println("\nDeclaracion de constante entero\n"); 
+        parser.simbolo=new Simbolo(consta.toString(), "int", ""+entero, "global", true);
+        if(parser.tabla.agregar(consta.toString(), parser.simbolo)){
+                        System.out.println("Consntante agregada "+consta.toString());
+                        System.out.println(parser.tabla.mostrar());
+                    }else{
+                        System.out.println("ERROR Constante NO agregada "+consta.toString());
+                    }
+    :}
+    |CONST FLOAT CONSTANTE:consta ASIGNACION FLOTANTE:flotante PUNTO_COMA
+    {: 
+        System.out.println("\nDeclaracion de constante flotante\n"); 
+        parser.simbolo=new Simbolo(consta.toString(), "float", ""+flotante, "global", true);
+        if(parser.tabla.agregar(consta.toString(), parser.simbolo)){
+                        System.out.println("Consntante agregada "+consta.toString());
+                        System.out.println(parser.tabla.mostrar());
+                    }else{
+                        System.out.println("ERROR Constante NO agregada "+consta.toString());
+                    }
+    :}
+    |CONST STRING CONSTANTE:consta ASIGNACION CADENA:cadena PUNTO_COMA
+    {: 
+        System.out.println("\nDeclaracion de constante cadena\n"); 
+        parser.simbolo=new Simbolo(consta.toString(), "string", ""+cadena, "global", true);
+        if(parser.tabla.agregar(consta.toString(), parser.simbolo)){
+                        System.out.println("Consntante agregada "+consta.toString());
+                        System.out.println(parser.tabla.mostrar());
+                    }else{
+                        System.out.println("ERROR Constante NO agregada "+consta.toString());
+                    }
+    :}
+    |CONST CHAR CONSTANTE:consta ASIGNACION CARACTER:caracter PUNTO_COMA
+        {: 
+        System.out.println("\nDeclaracion de constante caracter\n"); 
+        parser.simbolo=new Simbolo(consta.toString(), "char", ""+caracter, "global", true);
+        if(parser.tabla.agregar(consta.toString(), parser.simbolo)){
+                        System.out.println("Consntante agregada "+consta.toString());
+                        System.out.println(parser.tabla.mostrar());
+                    }else{
+                        System.out.println("ERROR Constante NO agregada "+consta.toString());
+                    }
+    :}
+;
+
+dec_funcion::= INT ID PARENTESIS_APERTURA PARENTESIS_CIERRE PUNTO_COMA
+    {: 
+        System.out.println("\nDeclaracion de funcion\n"); 
+    :}
+        |INT ID PARENTESIS_APERTURA PARENTESIS_CIERRE LLAVE_APER cuerpo_instrucciones LLAVE_CERR
+        {: 
+        System.out.println("\nfuncion main \n"); 
+    :}
+;
+
+
+tipo_dato::=;
+valor::=ENTERO|FLOTANTE|ID;
